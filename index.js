@@ -74,7 +74,7 @@ server.get('/download/:container', (req, res) => {
 
 server.get('/download/:container/:path(*)', (req, res) => {
     const path = `${req.params.container}/${req.params.path}`;
-    fs.createReadStream(path, {encoding: 'utf-8'}).pipe(res);
+    fs.createReadStream(path).pipe(res);
 });
 
 server.put('/upload/:runId', (req, res, next) => {
