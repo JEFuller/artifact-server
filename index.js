@@ -74,19 +74,22 @@ server.get('/download/:container', (req, res) => {
 
 server.get('/download/:container/:path(*)', (req, res) => {
     const path = `${req.params.container}/${req.params.path}`;
-    fs.createReadStream(path, {encoding: 'utf-8'}).pipe(res);
+    fs.createReadStream(path).pipe(res);
 });
 
 server.put('/upload/:runId', (req, res, next) => {
     const { itemPath } = req.query;
     const {runId} = req.params;
+    const contentRange = req.headers['content-range']
     req.setEncoding('base64');
     fs.ensureFileSync(`${runId}/${itemPath}`);
-    fs.writeFile(`${runId}/${path.normalize(itemPath)}`, req.body, {encoding: 'utf-8'}, (err) => {
-        if (err) {
-            console.error(err);
-        }
-        res.status(200).json({message: 'success'})
+    const createMode = !contentRange || contentRange.startsWith('bytes 0-')
+    fs.open(`${runId}/${path.normalize(itemPath)}`, createMode ? 'w' : 'a', 666, ( err, fd ) => {
+        if (err) console.error(err);
+        fs.write( fd, req.body, (err) => {
+            if (err) console.error(err);
+            res.status(200).json({message: 'success'});
+        });
     });
 });
 
